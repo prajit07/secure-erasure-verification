@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Verify Device Hash (PDF or QR)</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+</head>
+<body>
+  <h2>Verify Storage Device SHA-256</h2>
+
+  <p><b>Option 1:</b> Upload PDF</p>
+  <input type="file" id="pdfInput" accept="application/pdf"><br><br>
+
+  <p><b>Option 2:</b> Upload QR Code</p>
+  <input type="file" id="qrInput" accept="image/*"><br><br>
+
+  <pre id="output"></pre>
+
+  <script>
+    const output = document.getElementById("output");
+    const HASH_BITS = 256;
+
+    // 👉 Replace with hash from your DB
+    const knownHash = "8c5d10757e5791fc007564ca9f28b080f1e1f1f110a192d140f43f8af4160f06";
+
+    // --- PDF Upload Handler ---
+    document.getElementById("pdfInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      let lsbBits = [];
+      for (let i = 0; i < bytes.length && lsbBits.length < HASH_BITS; i++) {
+        lsbBits.push(bytes[i] & 1);
+      }
+
+      let extractedHash = "";
+      for (let i = 0; i + 3 < lsbBits.length; i += 4) {
+        let nibble =
+          (lsbBits[i] << 3) |
+          (lsbBits[i + 1] << 2) |
+          (lsbBits[i + 2] << 1) |
+          lsbBits[i + 3];
+        extractedHash += nibble.toString(16);
+      }
+
+      verifyHash(extractedHash, "PDF");
+    });
+
+    // --- QR Upload Handler ---
+    document.getElementById("qrInput").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const qrResult = jsQR(imageData.data, canvas.width, canvas.height);
+          if (qrResult) {
+            verifyHash(qrResult.data.trim(), "QR Code");
+          } else {
+            output.textContent = "❌ Could not decode QR code.";
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // --- Verification Logic ---
+    function verifyHash(extractedHash, source) {
+      let result = `Extracted SHA-256 from ${source}:\n${extractedHash}\n\n`;
+      if (extractedHash.toLowerCase() === knownHash.toLowerCase()) {
+        result += "✅ Verified: Hash matches the database";
+      } else {
+        result += "❌ Not Verified: Hash mismatch with database";
+      }
+      output.textContent = result;
+    }
+  </script>
+</body>
+</html>
