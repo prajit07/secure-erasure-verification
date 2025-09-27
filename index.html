@@ -157,8 +157,8 @@
     <div style="display: flex; justify-content: center; align-items: center; height: 150px;">
   <img src="Disk_WIPE.png" alt="Logo" style="height: 100px;">
 </div>
-    <h1 id="pageTitle">Device Hash Verification</h1>
-    <p class="subtitle">Upload PDF or QR code to verify SHA-256 hash</p>
+    <h1 id="pageTitle">Secure Erasure Verification</h1>
+    <p class="subtitle">Upload PDF or QR code to verify the Device</p>
 
     <div class="file-upload">
       <label for="pdfInput" class="custom-file-input" tabindex="0" aria-label="Upload PDF file containing embedded hash">
@@ -259,10 +259,10 @@
     function verifyHash(extractedHash, source) {
       let message = `Extracted SHA-256 from ${source}:\n${extractedHash}\n\n`;
       if (extractedHash.toLowerCase() === knownHash.toLowerCase()) {
-        message += "✅ Verified: Hash matches the database";
+        message += "✔️ Verified: Device is found in the database";
         showResult(message, "verified");
       } else {
-        message += "❌ Not Verified: Hash mismatch with database";
+        message += "❌ Not Verified: Device isn't found in the database";
         showResult(message, "failed");
       }
     }
