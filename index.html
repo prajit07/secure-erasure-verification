@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verify Device Hash (PDF or QR)</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    .container {
+      background: #fff;
+      color: #333;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      max-width: 480px;
+      width: 100%;
+      padding: 30px 35px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    h1 {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #4a148c;
+      font-size: 1.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 4px #9c27b0a0;
+    }
+
+    p.subtitle {
+      margin: 0 0 25px;
+      color: #6a1b9a;
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .file-upload {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    label.custom-file-input {
+      cursor: pointer;
+      background: #6a1b9a;
+      border-radius: 8px;
+      padding: 14px 20px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px #540d88;
+      user-select: none;
+    }
+
+    label.custom-file-input:hover {
+      background: #7b1fa2;
+      box-shadow: 0 6px 16px #7b1fa2cc;
+    }
+
+    label.custom-file-input svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+      flex-shrink: 0;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #output {
+      white-space: pre-wrap;
+      background: #eee;
+      border-radius: 10px;
+      padding: 20px;
+      color: #4a148c;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
+      min-height: 100px;
+      box-shadow: inset 0 0 20px #b39ddb;
+      transition: background-color 0.3s ease;
+    }
+
+    #output.verifying {
+      color: #33691e;
+      font-style: italic;
+      background: #e8f5e9;
+      box-shadow: inset 0 0 20px #aed581;
+    }
+
+    #output.verified {
+      color: #2e7d32;
+      background: #dcedc8;
+      box-shadow: inset 0 0 25px #81c784;
+    }
+
+    #output.failed {
+      color: #c62828;
+      background: #ffcdd2;
+      box-shadow: inset 0 0 25px #ef9a9a;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 4px solid #cfd8dc;
+      border-top: 4px solid #6a1b9a;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 30px 15px;
+      }
+
+      .container {
+        padding: 25px 20px;
+      }
+
+      label.custom-file-input {
+        padding: 12px 18px;
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main" aria-labelledby="pageTitle">
+    <div style="display: flex; justify-content: center; align-items: center; height: 150px;">
+  <img src="Disk_WIPE.png" alt="Logo" style="height: 100px;">
+</div>
+    <h1 id="pageTitle">Secure Erasure Verification</h1>
+    <p class="subtitle">Upload PDF or QR code to verify the Device</p>
+
+    <div class="file-upload">
+      <label for="pdfInput" class="custom-file-input" tabindex="0" aria-label="Upload PDF file containing embedded hash">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h7l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM13 9V3.5L18.5 9H13z"/></svg>
+        Upload PDF
+      </label>
+      <input type="file" id="pdfInput" accept="application/pdf" />
+    </div>
+
+    <div class="file-upload">
+      <label for="qrInput" class="custom-file-input" tabindex="0" aria-label="Upload QR code image file">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm5-2h6v6h-6V3zm2 2v2h2V5h-2zm-7 7h6v6H3v-6zm2 2v2h2v-2H5zm5 0h6v6h-6v-6zm2 2v2h2v-2h-2z"/></svg>
+        Upload QR Code
+      </label>
+      <input type="file" id="qrInput" accept="image/*" />
+    </div>
+
+    <pre id="output" 
+     style="white-space: pre-wrap; 
+            word-wrap: break-word; 
+            width: 100%; 
+            max-width: 1200px; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            font-family: monospace; 
+            background: #f9f9f9;"></pre>
+
+  </div>
+
+  <script>
+    const output = document.getElementById("output");
+    const HASH_BITS = 256;
+    const knownHash = "8c5d10757e5791fc007564ca9f28b080f1e1f1f110a192d140f43f8af4160f06";
+
+    function showLoading(message) {
+      output.textContent = "";
+      output.className = "verifying";
+      output.innerHTML = `<span class="spinner"></span>${message}`;
+    }
+
+    function showResult(message, statusClass) {
+      output.className = statusClass;
+      output.textContent = message;
+    }
+
+    document.getElementById("pdfInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      showLoading("Extracting hash from PDF...");
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let lsbBits = [];
+        for (let i = 0; i < bytes.length && lsbBits.length < HASH_BITS; i++) {
+          lsbBits.push(bytes[i] & 1);
+        }
+        let extractedHash = "";
+        for (let i = 0; i + 3 < lsbBits.length; i += 4) {
+          let nibble =
+            (lsbBits[i] << 3) |
+            (lsbBits[i + 1] << 2) |
+            (lsbBits[i + 2] << 1) |
+            lsbBits[i + 3];
+          extractedHash += nibble.toString(16);
+        }
+        verifyHash(extractedHash, "PDF");
+      } catch {
+        showResult("❌ Error reading PDF file.", "failed");
+      }
+    });
+
+    document.getElementById("qrInput").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      showLoading("Decoding QR code...");
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const qrResult = jsQR(imageData.data, canvas.width, canvas.height);
+          if (qrResult) {
+            verifyHash(qrResult.data.trim(), "QR Code");
+          } else {
+            showResult("❌ Could not decode QR code.", "failed");
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // function verifyHash(extractedHash, source) {
+    //   let message = `Extracted SHA-256 from ${source}:\n${extractedHash}\n\n`;
+    //   if (extractedHash.toLowerCase() === knownHash.toLowerCase()) {
+    //     message += "✔️ Verified: Device is found in the database";
+    //     showResult(message, "verified");
+    //   } else {
+    //     message += "❌ Not Verified: Device isn't found in the database";
+    //     showResult(message, "failed");
+    //   }
+    // }
+
+const axios = require('axios');
+const crypto = require('crypto');
+
+// 1. Download raw file from GitHub
+async function fetchFile(url) {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    return Buffer.from(response.data);
+}
+
+// 2. Compute SHA256 hash
+function computeSHA256(buffer) {
+    return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+// 3. Verify against DB hash
+async function verifyFile(url, expectedHash) {
+    try {
+        const fileBuffer = await fetchFile(url);
+        const hash = computeSHA256(fileBuffer);
+        console.log("Computed hash:", hash);
+        if (hash.toLowerCase() === expectedHash.toLowerCase()) {
+            console.log("✅ Hash verified!");
+            return true;
+        } else {
+            console.log("❌ Hash mismatch!");
+            return false;
+        }
+    } catch (err) {
+        console.error("Error:", err);
+    }
+}
+
+// Usage
+const fileUrl = "https://raw.githubusercontent.com/prajit07/secure-erasure-verification/refs/heads/main/hashes.txt";
+//const expectedHash = "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2";
+
+verifyFile(fileUrl, qrResult.data.trim());
+
+
+  </script>
+</body>
+</html>
